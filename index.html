@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply HVK: De Grote Oefentool</title>
+    <style>
+        :root {
+            /* Apply Kleurprofiel: Groen tinten */
+            --primary: #27ae60;
+            --secondary: #2ecc71;
+            --dark-green: #1e8449;
+            --light-green: #eafaf1;
+            --error: #e74c3c;
+            --dark: #2c3e50;
+            --white: #ffffff;
+            --text: #333333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text);
+        }
+
+        header {
+            background-color: var(--primary);
+            color: var(--white);
+            width: 100%;
+            padding: 1.5rem 0;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        main {
+            width: 95%;
+            max-width: 1200px;
+            margin: 2rem 0;
+            background: var(--white);
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--primary);
+        }
+
+        .hidden { display: none !important; }
+        button { padding: 14px 28px; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: 0.3s; margin: 5px; font-weight: bold; }
+        button:hover { opacity: 0.9; transform: translateY(-2px); }
+        
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-nav { background: var(--dark); color: white; }
+        .btn-success { background: var(--dark-green); color: white; }
+        .btn-error { background: var(--error); color: white; }
+
+        .stats { display: flex; justify-content: space-between; font-size: 1.1rem; margin-bottom: 2rem; padding-bottom: 15px; border-bottom: 2px solid var(--light-green); color: var(--dark-green); }
+        .question-text { font-size: 1.3rem; line-height: 1.7; margin-bottom: 2.5rem; color: var(--dark); white-space: pre-wrap; font-weight: 500; }
+        
+        /* MC Options */
+        .option-btn { width: 100%; text-align: left; background: var(--light-green); color: var(--dark); border-left: 6px solid var(--secondary); margin: 10px 0; padding: 18px; }
+        .option-btn.correct { background: var(--primary) !important; color: white; border-color: var(--dark-green); }
+        .option-btn.wrong { background: var(--error) !important; color: white; border-color: #a93226; }
+
+        /* Table UI */
+        .table-container { overflow-x: auto; width: 100%; margin-top: 25px; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+        th, td { border: 1px solid #e0e0e0; padding: 18px; text-align: left; vertical-align: top; }
+        th { background: var(--primary); color: white; position: sticky; top: 0; }
+        tr:nth-child(even) { background-color: var(--light-green); }
+        .ans-cell { background: #fafafa; }
+        .ans-content { display: none; padding: 15px; border: 1px dashed var(--primary); margin-top: 10px; color: var(--dark-green); background: white; border-radius: 5px; }
+
+        /* No italics allowed */
+        * { font-style: normal !important; }
+        h1, h2, h3, .bold { font-weight: bold; }
+        
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .pop { animation: pop 0.4s ease; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Apply HVK: De Grote Oefentool</h1>
+</header>
+
+<main>
+    <div id="screen-start">
+        <h2 style="text-align:center; color: var(--dark-green);">Selecteer een module om te starten</h2>
+        <div style="display:flex; justify-content: center; gap: 20px; margin-top: 40px; flex-wrap: wrap;">
+            <button class="btn-primary" onclick="initQuiz('1')">Module 1: Kaderstelling & Organisatie</button>
+            <button class="btn-primary" onclick="initQuiz('2')">Module 2: Seveso, ARIE & Stoffen</button>
+        </div>
+        <div style="text-align:center; margin-top: 50px;">
+            <button class="btn-nav" onclick="initTable()">Tabeloverzicht (Vragenlijst)</button>
+        </div>
+    </div>
+
+    <div id="screen-quiz" class="hidden">
+        <div class="stats">
+            <span id="q-count">Vraag --/--</span>
+            <span id="streak-count" class="bold">Streak: 0 🔥</span>
+        </div>
+        <div id="q-content">
+            <p id="q-text" class="question-text"></p>
+            <div id="mc-options" class="hidden"></div>
+            <div id="open-options" class="hidden">
+                <button class="btn-primary" onclick="revealOpen()">Antwoord onthullen</button>
+                <div id="open-answer" class="hidden" style="margin: 25px 0; padding: 25px; background: #fdfdfd; border-left: 8px solid var(--primary); line-height: 1.8; box-shadow: inset 0 0 10px rgba(0,0,0,0.02);"></div>
+                <div id="open-eval" class="hidden">
+                    <p class="bold">Had je de essentie van dit antwoord goed?</p>
+                    <button class="btn-success" onclick="scoreOpen(true)">Ja, ik heb de kern!</button>
+                    <button class="btn-error" onclick="scoreOpen(false)">Nee, nog niet.</button>
+                </div>
+            </div>
+        </div>
+        <div id="feedback-msg" class="hidden" style="margin: 25px 0; padding: 20px; border-radius: 10px; text-align: center;"></div>
+        <div style="margin-top: 40px; border-top: 2px solid var(--light-green); padding-top: 20px; display: flex; justify-content: space-between;">
+            <button class="btn-nav" onclick="goHome()">Menu</button>
+            <button id="next-btn" class="btn-primary hidden" onclick="nextQuestion()">Volgende Vraag</button>
+        </div>
+    </div>
+
+    <div id="screen-table" class="hidden">
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h2 style="color: var(--dark-green);">Integraal Vragenoverzicht</h2>
+            <button class="btn-nav" onclick="goHome()">Menu</button>
+        </div>
+        <div style="margin-bottom: 25px;">
+            Filter op Module: 
+            <button class="btn-primary" onclick="renderTable('all')">Alles tonen</button>
+            <button class="btn-primary" onclick="renderTable('1')">Module 1</button>
+            <button class="btn-primary" onclick="renderTable('2')">Module 2</button>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">Module</th>
+                        <th>Vraagstelling</th>
+                        <th>Type / Opties</th>
+                        <th>Verwacht Antwoord</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<script>
+const rawData = [
+    // Module 1 - Integrale teksten
+    {m:"1", q:"Leg in eigen woorden uit wat het verschil is tussen een Europese verordening en een Europese richtlijn en hoe beide uiteindelijk terug te zien zijn in de Nederlandse arbeidsomstandighedenwetgeving.", mc:null, a:"Een verordening heeft een algemene strekking. Zij is verbindend in al haar onderdelen en is rechtstreeks toepasselijk in elke lidstaat. Een richtlijn is verbindend ten aanzien van het te bereiken resultaat voor elke lidstaat waarvoor zij bestemd is, maar aan de nationale instanties wordt de bevoegdheid gelaten de vorm en de middelen te kiezen (omzetting in Arbowet/besluit)."},
+    {m:"1", q:"Beschrijf hoe Arbowet, Arbobesluit, Arboregeling en Arbocatalogi zich tot elkaar verhouden en hoe jij deze bronnen in de praktijk zou gebruiken bij het beantwoorden van een vraag over veilig werken.", mc:null, a:"Arbowet: Kaderwet met algemene bepalingen. Arbobesluit: Uitwerking van de wet met doelvoorschriften. Arboregeling: Concrete voorschriften en grenswaarden. Arbocatalogus: Praktische invulling door werkgevers en werknemers (branche-specifiek) om aan doelvoorschriften te voldoen."},
+    {m:"1", q:"Formuleer op basis van artikel 5 Arbowet welke criteria jij zou hanteren om te beoordelen of de gekozen periodiciteit van een RI&E in een organisatie voldoende onderbouwd is.", mc:null, a:"Criteria zijn: veranderende werkmethoden, wijziging van technische hulpmiddelen, aanpassing van de procesomstandigheden of opgedane ervaringen zoals (bijna-)ongevallen en actuele stand van de techniek."},
+    {m:"1", q:"Benoem welke criteria jij als HVK zou gebruiken om te beoordelen of samenwerking tussen werkgever en werknemers bij het opstellen van de RI&E voldoet aan artikel 12 Arbowet.", mc:null, a:"Aantoonbare betrokkenheid van de OR of PVT, vastgelegde consultatiemomenten met de werkvloer, en het feit dat medewerkers de kans hebben gekregen risico's uit hun eigen dagelijkse praktijk in te brengen."},
+    {m:"1", q:"Geef aan welke criteria jij zou toepassen om in een RI&E te beoordelen of de interne deskundigheid conform artikel 13 Arbowet voldoende is ingericht.", mc:null, a:"Toetsbare elementen: beschikbare tijd per werknemer, opleidingsniveau van de preventiemedewerker(s), de mate van onafhankelijkheid in hun adviesrol en de positionering direct onder de directie."},
+    {m:"1", q:"Kies een prioritaire risico die in veel organisaties voorkomt en beschrijf welke criteria jij als HVK zou gebruiken om te beoordelen of dit risico in een RI&E voldoende volledig en betrouwbaar is uitgewerkt.", mc:null, a:"Criteria: Zijn alle relevante gevaren benoemd? Is de blootstelling reëel gewogen? Zijn de maatregelen getoetst aan de arbeidshygiënische strategie? Is er een directe koppeling tussen risicofactor en maatregel?"},
+    {m:"1", q:"Licht toe hoe artikel 11 van de Beleidsregel boeteoplegging gebruikt kan worden als toetssteen voor de kwaliteit van een RI&E en wat dit betekent voor de beoordeling van één gekozen prioritair risico.", mc:null, a:"Artikel 11 stelt dat de RI&E 'actueel, volledig en betrouwbaar' moet zijn. Als een prioritair risico ontbreekt of onvoldoende is gewogen, wordt de RI&E als 'niet aanwezig' beschouwd voor dat onderdeel, wat leidt tot zware boetes."},
+    {m:"1", q:"Stel dat een ongeval met meldingsplicht plaatsvindt binnen een organisatie. Beschrijf hoe jij zou nagaan of de organisatie aantoonbaar heeft voldaan aan de matigingsgronden uit de Beleidsregel boeteoplegging, specifiek gericht op het betreffende risico.", mc:null, a:"Je controleert op: 1. Is de RI&E op orde voor dit risico? 2. Is er aantoonbaar onderricht gegeven? 3. Is er adequaat toezicht gehouden? 4. Zijn veilige arbeidsmiddelen/PBM daadwerkelijk verstrekt?"},
+    {m:"1", q:"Kies één verschil tussen de organisatiedenken van Weber en Drucker en licht toe waarom dit verschil relevant is voor het beoordelen of een organisatie veilig en effectief functioneert.", mc:null, a:"Weber focust op bureaucratie: sturen op regels, hiërarchie en voorspelbaarheid (proces-focus). Drucker focust op Management by Objectives: sturen op resultaat en individuele bijdrage (output-focus). Relevant voor de keuze tussen een systeem-gestuurde of gedrag-gestuurde veiligheidsaanpak."},
+    {m:"1", q:"Leg in eigen woorden uit wat Weber bedoelde met zijn concept van bureaucratische organisatie en welke bedoeling hij daarmee had.", mc:null, a:"Bedoeling was maximale efficiëntie en rechtvaardigheid door subjectiviteit uit te sluiten via vaste regels, onpersoonlijke verhoudingen en een duidelijke taakverdeling op basis van deskundigheid."},
+    {m:"1", q:"Kies één stelling over managementverantwoordelijkheid in risicomanagement (bijvoorbeeld dat het beheersen van verliezen net zo belangrijk is als winst maximaliseren) en licht kort toe hoe jij deze stelling interpreteert in het kader van veilig en efficiënt organiseren.", mc:null, a:"Interpretatie: Risicomanagement is geen 'extraatje' maar een instrument voor continuïteit. Door verliezen (ongevallen, stilstand) te beperken, wordt de efficiëntie direct verhoogd."},
+    {m:"1", q:"Leg uit wat voor jou het verschil is tussen speculatieve risico’s en niet speculatieve risico’s en geef van beide risicotypes één generiek voorbeeld dat in veel organisaties kan voorkomen.", mc:null, a:"Speculatief: risico met kans op winst óf verlies (bijv. investering in een nieuwe markt). Niet-speculatief: risico met alleen kans op verlies of status quo (bijv. brandgevaar of valgevaar)."},
+    {m:"1", q:"Benoem vier principes van risicomanagement volgens gangbare raamwerken (zoals ISO 31000) en beschrijf kort hoe deze in een willekeurige organisatie in de praktijk zichtbaar kunnen worden toegepast.", mc:null, a:"1. Waardecreatie (veiligheid loont). 2. Integratie (onderdeel van elke beslissing). 3. Dynamiek (inspelen op verandering). 4. Transparantie (besluitvorming op basis van feiten)."},
+    {m:"1", q:"Leg kort uit waarom een Hogere Veiligheidskundige een morele verantwoordelijkheid heeft die verder gaat dan alleen het volgen van wetgeving, en hoe dit zichtbaar wordt in dagelijkse keuzes binnen organisaties.", mc:null, a:"De HVK heeft de plicht de fysieke integriteit van medewerkers te beschermen, ook als de wet een 'grijs gebied' laat. Dit uit zich in onafhankelijk advies, ook als dat de productie tijdelijk vertraagt."},
+    {m:"1", q:"Kies een denkbaar ethisch dilemma voor een veiligheidskundige (bijvoorbeeld: onvoldoende budget voor noodzakelijke maatregelen) en beschrijf welke factoren jij zou meewegen om tot een verantwoord advies te komen.", mc:null, a:"Factoren: wettelijke verplichtingen, ernst/waarschijnlijkheid van letsel, professionele integriteit (HVK-code) en de mogelijkheid voor alternatieve, minder kostbare beheersmaatregelen (tijdelijke oplossingen)."},
+    {m:"1", q:"Licht toe hoe een kosten baten analyse kan helpen bij het overtuigen van management in veiligheidsvraagstukken en welke rol ethiek speelt in de interpretatie ervan.", mc:null, a:"KBA toont de vermeden kosten (verzuim, boetes, imagoschade) tegenover de investering. Ethiek stelt de grens: een onacceptabel hoog risico mag niet op basis van kosten geaccepteerd worden."},
+    {m:"1", q:"Geef een schets hoe jij de voorlichting en instructie rondom arbobeleidsaspecten binnen een organisatie zou organiseren, welke onderwerpen hierin minimaal aan bod moeten komen en op welke wijze en frequentie deze voorlichting volgens jou moet worden aangeboden.", mc:null, a:"Organisatie: Introductie voor nieuwkomers, jaarlijkse herhaling via toolboxes. Inhoud: resultaten RI&E, veilige werkmethoden, noodprocedures. Frequentie: afhankelijk van risicoprofiel, maar minimaal bij elke wijziging in het werkproces."},
+    {m:"1", q:"Beschrijf in eigen woorden wat wordt bedoeld met risicobeoordeling en risicobehandeling en licht toe hoe een organisatie deze twee onderdelen in de praktijk kan toepassen binnen het eigen risicomanagementproces.", mc:null, a:"Risicobeoordeling: schatten van ernst en kans (wegen). Risicobehandeling: selecteren van beheersmaatregelen (elimineren, isoleren, etc.). Toepassing: door de RI&E jaarlijks te evalueren en het plan van aanpak bij te sturen."},
+    {m:"1", q:"Kies een organisatorische situatie waarin een externe partij invloed wil uitoefenen op de richting van een organisatie. Benoem op basis van het kleurenmodel welke veranderstrategie jij zou inzetten om daadwerkelijk koers te kunnen bepalen, en licht toe welke stappen daarbij horen en welk resultaat je met deze aanpak beoogt.", mc:null, a:"Afhankelijk van de keuze: bijv. Geel (onderhandelen over belangen) of Blauw (sturen op rationele feiten en plannen). De focus moet liggen op het borgen van de eigen strategische doelen."},
+    {m:"1", q:"Werk een gedeelte van een risicoanalyse uit voor een door jou gekozen werkactiviteit. Gebruik hierbij een generiek risicoanalyseformat en werk het volgende uit:\n• Kies één gevaar en beschrijf dit volledig.\n• Benoem bij dit gevaar minimaal twee risico’s.\n• Beschrijf per risico minimaal twee risicofactoren.\n• Voer per risicofactor een risicoweging uit (bijv. volgens Fine & Kinney).\n• Formuleer per risicofactor beheersmaatregelen op bron, collectief en individueel niveau.", mc:null, a:"Essentie: Het onderscheid tussen gevaar (de bron, bijv. lawaai) en risico (het gevolg, bijv. gehoorschade) moet scherp zijn. De maatregelen moeten de arbeidshygiënische strategie volgen (bron voorop)."},
+
+    // Module 2 - Integrale teksten
+    {m:"2", q:"Welke Europese verordening regelt de indeling, etikettering en verpakking van gevaarlijke stoffen?", mc:["A. REACH","B. CLP","C. Seveso III","D. ADR"], a:"B. De CLP-verordening (Classification, Labelling and Packaging)."},
+    {m:"2", q:"Wanneer wordt een inrichting aangemerkt als een Seveso-inrichting?", mc:["A. Bij meer dan 50 medewerkers","B. Bij overschrijding van drempelwaarden in Bijlage I van de Richtlijn","C. Bij een afstand tot bebouwing < 500m","D. Bij gebruik van elke hoeveelheid CMR-stof"], a:"B. Bij overschrijding van drempelwaarden in Bijlage I van de Richtlijn Seveso III."},
+    {m:"2", q:"Wat is de ondergrens voor de algemene toepasbaarheid van de PGS 15 bij verpakte gevaarlijke stoffen?", mc:["A. 10 kg/liter","B. 100 kg/liter","C. 250 kg/liter","D. 1000 kg/liter"], a:"C. De grens ligt bij 250 kg of liter per opslagvoorziening."},
+    {m:"2", q:"In een HAZOP-studie is 'Temperatuur' een parameter. Wat is dan het woord 'Laag'?", mc:["A. Een gevolg","B. Een oorzaak","C. Een begeleidingswoord (guide word)","D. Een risicoklasse"], a:"C. Een begeleidingswoord (guide word) om afwijkingen van de ontwerpintentie te identificeren."},
+    {m:"2", q:"Welk document moet een Hogedrempelinrichting (HDI) verplicht opstellen dat een LDI niet hoeft?", mc:["A. Een RI&E","B. Een BHV-plan","C. Een Veiligheidsrapport (VR)","D. Een PBZO"], a:"C. Een Veiligheidsrapport (VR) is verplicht voor HDI-bedrijven."},
+    {m:"2", q:"Wat is de betekenis van de afkorting ZZS in de Nederlandse regelgeving?", mc:["A. Zelfstandig Zeer Schadelijk","B. Zwaar Zeeverontreinigende Stoffen","C. Zeer Zorgwekkende Stoffen","D. Zeer Zeldzame Stoffen"], a:"C. Zeer Zorgwekkende Stoffen (o.a. kankerverwekkend, mutageen)."},
+    {m:"2", q:"Wat wordt primair berekend met een Kwantitatieve Risicoanalyse (QRA)?", mc:["A. De interne ongevallenstatistieken","B. Het externe risico (Plaatsgebonden Risico en Groepsrisico)","C. De kosten van de sprinklerinstallatie","D. De effectiviteit van de gehoorbescherming"], a:"B. Het externe risico voor de omgeving (PR en GR)."},
+    {m:"2", q:"Waar moet een ARIE-bedrijf zich sinds januari 2023 verplicht aanmelden?", mc:["A. Bij de lokale brandweer","B. Bij de Nederlandse Arbeidsinspectie (NLA)","C. Bij het UWV","D. Bij de Kamer van Koophandel"], a:"B. Bij de Nederlandse Arbeidsinspectie (NLA)."},
+    {m:"2", q:"Wat is de grenswaarde voor de druk (PS) waarbij apparatuur onder de PED (Pressure Equipment Directive) valt?", mc:["A. Meer dan 0,5 bar","B. Meer dan 2,0 bar","C. Meer dan 5,0 bar","D. Meer dan 10 bar"], a:"A. Meer dan 0,5 bar."},
+    {m:"2", q:"Wat is een kernkenmerk van een Independent Protection Layer (IPL)?", mc:["A. De laag is goedkoop te onderhouden","B. De laag is onafhankelijk van andere beveiligingslagen","C. De laag wordt altijd handmatig bediend","D. De laag bestaat alleen uit software"], a:"B. De laag is onafhankelijk van andere beveiligingslagen en het initiërende event."},
+    {m:"2", q:"Welke PGS-publicatie is het handboek voor brandbestrijdingssystemen (VBB-systemen)?", mc:["A. PGS 6","B. PGS 14","C. PGS 15","D. PGS 29"], a:"B. PGS 14."},
+    {m:"2", q:"Welke wettelijke verplichting heeft voorrang bij het werken met CMR-stoffen zoals formaldehyde?", mc:["A. Het dragen van een volgelaatsmasker","B. De vervangingsplicht (substitutie)","C. Het plaatsen van waarschuwingsborden","D. Het verkorten van de werktijd"], a:"B. De vervangingsplicht (substitutie) heeft de hoogste prioriteit."},
+    {m:"2", q:"Hoe wordt het Groepsrisico (GR) visueel weergegeven in een QRA?", mc:["A. In een taartdiagram","B. In een fN-curve","C. In een staafgrafiek","D. In een MUOPO-analyse"], a:"B. In een fN-curve."},
+    {m:"2", q:"Waaruit bestaat de eerste stap van de Arbeidshygiënische Strategie?", mc:["A. PBM verstrekken","B. Ventilatie verbeteren","C. Bronaanpak (eliminatie of substitutie)","D. Werktijden aanpassen"], a:"C. Bronaanpak (eliminatie of substitutie)."},
+    {m:"2", q:"Wat is de rol van een HVK-er bij een scopetoets voor gevaarlijke stoffen?", mc:["A. Het uitvoeren van chemische analyses","B. Vaststellen welke wet- en regelgeving van toepassing is op de opslag","C. Het repareren van lekkende vaten","D. Het voorschrijven van medische testen"], a:"B. Vaststellen welke wet- en regelgeving van toepassing is op de opslag (bijv. PGS 15 check)."},
+    {m:"2", q:"Welk element van het Seveso Veiligheidsbeheerssysteem (VBS) borgt de leerervaring na incidenten?", mc:null, a:"Element vii: Onderzoek van ongevallen en bijna-ongevallen."},
+    {m:"2", q:"Wat typeert een 'Runaway reactie' in een chemische installatie?", mc:["A. Een plotselinge uitval van de stroom","B. Een ongecontroleerde exotherme reactie met snelle druk- en temperatuurstijging","C. Het weglopen van een operator bij alarm","D. Een defecte afsluiter die open blijft staan"], a:"B. Een ongecontroleerde exotherme reactie met snelle druk- en temperatuurstijging."},
+    {m:"2", q:"Op welke wijze zijn de ARIE-drempelwaarden sinds 2023 bepaald?", mc:["A. Willekeurig door de overheid","B. Gekoppeld aan de CLP-gevaarsindeling","C. Gebaseerd op de omzet van het bedrijf","D. Afhankelijk van het aantal BHV-ers"], a:"B. Gekoppeld aan de CLP-gevaarsindeling (gelijkgetrokken met Seveso)."},
+    {m:"2", q:"Wat wordt beoordeeld met een Safety Integrity Level (SIL)?", mc:["A. De brandwerendheid van de muren","B. De betrouwbaarheid van een instrumentele beveiligingsfunctie","C. De gladheid van de werkvloer","D. Het draagcomfort van PBM"], a:"B. De betrouwbaarheid van een instrumentele beveiligingsfunctie."},
+    {m:"2", q:"Wie is eindverantwoordelijk voor de tijdige herkeuring van drukapparatuur?", mc:["A. De fabrikant","B. De keuringsinstantie (AKI)","C. De gebruiker of eigenaar van de installatie","D. De Nederlandse Arbeidsinspectie"], a:"C. De gebruiker of eigenaar van de installatie."},
+    {m:"2", q:"Een bedrijf valt onder de ARIE-regeling. Welke stappen moet de directie nemen binnen de Plan-fase van de PDCA-cyclus?", mc:null, a:"Stoffen inventariseren, scenario-analyse zware ongevallen uitvoeren, maatregelen vaststellen en het PBZO-document opstellen."},
+    {m:"2", q:"Noem 4 disciplines voor een HAZOP-team en beschrijf kort hun specifieke rol.", mc:null, a:"1. Voorzitter (leidt de methode). 2. Notulist (legt sheets vast). 3. Process Engineer (kennis ontwerp/P&ID). 4. Operator (kennis dagelijkse praktijk)."},
+    {m:"2", q:"Een medewerker wordt blootgesteld aan benzo(a)pyreen. Wat is de rol van de HVK-er versus de Arbeidshygiënist?", mc:null, a:"HVK: Inventarisatie, bronbeheersing toetsen, indicatieve meting laten doen. AH: Gevalideerde metingen uitvoeren en diepgaande blootstellingsanalyse maken."},
+    {m:"2", q:"Welke documenten moeten aanwezig zijn in het installatiedossier van een drukvat (PED)?", mc:null, a:"CE-verklaring, handleiding, ontwerptekeningen, Keuring voor Ingebruikneming (KvI) en eerdere herkeuringsrapporten."},
+    {m:"2", q:"Wat is het primaire technische verschil tussen PGS 15 beschermingsniveau 1 en niveau 3?", mc:null, a:"Niveau 1: Actieve beveiliging (automatische blusinstallatie). Niveau 3: Passieve beveiliging (brandcompartimentering)."},
+    {m:"2", q:"Is natronloog een Seveso of ARIE stof? Indien ja, geef ook de drempelwaarde.", mc:null, a:"Het is een ARIE stof (drempelwaarde 15 ton). Het is geen Seveso stof."},
+    {m:"2", q:"Wat staat er wettelijk in de kennisgeving van een Seveso-inrichting?", mc:null, a:"Gegevens exploitant, lijst gevaarlijke stoffen (aard/hoeveelheid), activiteiten, omgevingsfactoren en indien HDI: informatie over PR en aandachtsgebieden."}
+];
+
+let currentSet = [];
+let quizIdx = 0;
+let streak = 0;
+
+function goHome() {
+    document.querySelectorAll('main > div').forEach(d => d.classList.add('hidden'));
+    document.getElementById('screen-start').classList.remove('hidden');
+}
+
+function initQuiz(mod) {
+    currentSet = rawData.filter(d => d.m === mod).sort(() => Math.random() - 0.5);
+    quizIdx = 0;
+    goHome();
+    document.getElementById('screen-start').classList.add('hidden');
+    document.getElementById('screen-quiz').classList.remove('hidden');
+    showQuestion();
+}
+
+function showQuestion() {
+    const item = currentSet[quizIdx];
+    document.getElementById('q-count').innerText = `Vraag ${quizIdx + 1}/${currentSet.length}`;
+    document.getElementById('q-text').innerText = item.q;
+    document.getElementById('feedback-msg').classList.add('hidden');
+    document.getElementById('next-btn').classList.add('hidden');
+    
+    if(item.mc) {
+        document.getElementById('mc-options').classList.remove('hidden');
+        document.getElementById('open-options').classList.add('hidden');
+        renderMC(item);
+    } else {
+        document.getElementById('mc-options').classList.add('hidden');
+        document.getElementById('open-options').classList.remove('hidden');
+        document.getElementById('open-answer').classList.add('hidden');
+        document.getElementById('open-eval').classList.add('hidden');
+    }
+}
+
+function renderMC(item) {
+    const container = document.getElementById('mc-options');
+    container.innerHTML = '';
+    item.mc.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerText = opt;
+        btn.onclick = () => checkMC(btn, opt[0], item.a[0]);
+        container.appendChild(btn);
+    });
+}
+
+function checkMC(btn, picked, correct) {
+    const btns = document.querySelectorAll('.option-btn');
+    btns.forEach(b => b.disabled = true);
+    
+    if(picked === correct) {
+        btn.classList.add('correct');
+        updateStreak(true);
+        showMsg("Helemaal correct!", "btn-success");
+    } else {
+        btn.classList.add('wrong');
+        btns.forEach(b => { if(b.innerText[0] === correct) b.classList.add('correct'); });
+        updateStreak(false);
+        showMsg("Helaas! Het juiste antwoord is gemarkeerd.", "btn-error");
+    }
+    document.getElementById('next-btn').classList.remove('hidden');
+}
+
+function revealOpen() {
+    const item = currentSet[quizIdx];
+    const div = document.getElementById('open-answer');
+    div.innerText = item.a;
+    div.classList.remove('hidden');
+    document.getElementById('open-eval').classList.remove('hidden');
+}
+
+function scoreOpen(win) {
+    updateStreak(win);
+    document.getElementById('open-eval').classList.add('hidden');
+    document.getElementById('next-btn').classList.remove('hidden');
+    showMsg(win ? "Goed onthouden!" : "Geen probleem, herhaal de theorie nog eens.", win ? "btn-success" : "btn-error");
+}
+
+function updateStreak(win) {
+    streak = win ? streak + 1 : 0;
+    const s = document.getElementById('streak-count');
+    s.innerText = `Streak: ${streak} 🔥`;
+    if(win) s.classList.add('pop');
+    setTimeout(() => s.classList.remove('pop'), 400);
+}
+
+function showMsg(txt, cls) {
+    const m = document.getElementById('feedback-msg');
+    m.innerText = txt;
+    m.className = "bold " + cls;
+    m.style.padding = "15px";
+    m.classList.remove('hidden');
+}
+
+function nextQuestion() {
+    quizIdx++;
+    if(quizIdx < currentSet.length) showQuestion();
+    else {
+        alert("Gefeliciteerd! Je hebt deze module voltooid.");
+        goHome();
+    }
+}
+
+function initTable() {
+    goHome();
+    document.getElementById('screen-start').classList.add('hidden');
+    document.getElementById('screen-table').classList.remove('hidden');
+    renderTable('all');
+}
+
+function renderTable(filter) {
+    const body = document.getElementById('table-body');
+    body.innerHTML = '';
+    const filtered = filter === 'all' ? rawData : rawData.filter(d => d.m === filter);
+    
+    filtered.forEach(d => {
+        const tr = document.createElement('tr');
+        const typeDisplay = d.mc ? d.mc.join('<br>') : '<span style="color:#27ae60; font-weight:bold;">Open Vraag</span>';
+        tr.innerHTML = `
+            <td>${d.m}</td>
+            <td class="bold">${d.q}</td>
+            <td>${typeDisplay}</td>
+            <td class="ans-cell">
+                <button class="btn-primary" onclick="toggleAns(this)" style="font-size:0.8rem; padding:8px 12px;">Antwoord tonen</button>
+                <div class="ans-content">${d.a}</div>
+            </td>
+        `;
+        body.appendChild(tr);
+    });
+}
+
+function toggleAns(btn) {
+    const div = btn.nextElementSibling;
+    if(div.style.display === 'block') {
+        div.style.display = 'none';
+        btn.innerText = "Antwoord tonen";
+    } else {
+        div.style.display = 'block';
+        btn.innerText = "Verbergen";
+    }
+}
+</script>
+</body>
+</html>

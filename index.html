@@ -49,6 +49,11 @@
         }
 
         .hidden { display: none !important; }
+        .topic-panel { background: var(--light-green); border: 1px solid #c8e6d4; border-radius: 12px; padding: 18px; margin: 24px auto 0; max-width: 760px; }
+        .topic-panel label { font-weight: bold; color: var(--dark-green); margin-right: 8px; }
+        .topic-panel select { padding: 12px; border-radius: 8px; border: 1px solid #b7c9bf; min-width: 260px; font-size: 1rem; background: white; }
+        .source-note { margin-top: 14px; padding: 12px 14px; border-left: 5px solid var(--secondary); background: var(--light-green); color: var(--dark); line-height: 1.5; border-radius: 6px; font-size: 0.95rem; }
+        .small-note { font-size: 0.9rem; color: var(--dark); line-height: 1.5; margin-top: 10px; }
         button { padding: 14px 28px; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: 0.3s; margin: 5px; font-weight: bold; }
         button:hover { opacity: 0.9; transform: translateY(-2px); }
         
@@ -99,6 +104,19 @@
             <button class="btn-primary" onclick="initQuiz('1')">Module 1: Kaderstelling & Organisatie</button>
             <button class="btn-primary" onclick="initQuiz('2')">Module 2: Seveso, ARIE & Stoffen</button>
         </div>
+        <div class="topic-panel">
+            <h3 style="margin-top:0; color: var(--dark-green);">Module 3: Technische veiligheid</h3>
+            <div style="display:flex; gap: 12px; align-items:center; flex-wrap:wrap;">
+                <label for="topic-start-select">Lesstof</label>
+                <select id="topic-start-select"></select>
+                <label style="font-weight:normal; color: var(--dark);">
+                    <input type="checkbox" id="randomize-start" checked>
+                    Vragen willekeurig aanbieden
+                </label>
+                <button class="btn-primary" onclick="initQuiz('3', getSelectedTopic('topic-start-select'), document.getElementById('randomize-start').checked)">Start module 3</button>
+            </div>
+            <div class="small-note">Kies alles oefenen voor de volledige set, of selecteer één onderwerp zoals ATEX. Bij open vragen volstaan steekwoorden; de app vergelijkt niet automatisch.</div>
+        </div>
         <div style="text-align:center; margin-top: 50px;">
             <button class="btn-nav" onclick="initTable()">Tabeloverzicht (Vragenlijst)</button>
         </div>
@@ -109,11 +127,22 @@
             <span id="q-count">Vraag --/--</span>
             <span id="streak-count" class="bold">Streak: 0 🔥</span>
         </div>
+        <div id="topic-quiz-panel" class="topic-panel hidden" style="max-width:none; margin-top:0; margin-bottom:24px;">
+            <label for="topic-quiz-select">Lesstof</label>
+            <select id="topic-quiz-select"></select>
+            <label style="font-weight:normal; color: var(--dark);">
+                <input type="checkbox" id="randomize-quiz" checked>
+                Willekeurig
+            </label>
+            <button class="btn-primary" onclick="initQuiz('3', getSelectedTopic('topic-quiz-select'), document.getElementById('randomize-quiz').checked)">Opnieuw starten</button>
+        </div>
         <div id="q-content">
             <p id="q-text" class="question-text"></p>
             <div id="mc-options" class="hidden"></div>
             <div id="open-options" class="hidden">
-                <button class="btn-primary" onclick="revealOpen()">Antwoord onthullen</button>
+                <p style="background: var(--light-green); border-left: 6px solid var(--primary); padding: 14px; line-height: 1.6;">Open vraag: typ je antwoord in steekwoorden. Je hoeft het voorbeeldantwoord niet letterlijk uit te typen. Dit antwoord wordt niet automatisch nagekeken. Na het onthullen krijg je een voorbeeldantwoord om je eigen antwoord mee te vergelijken.</p>
+                <textarea id="open-input" placeholder="Typ hier je steekwoorden..." style="width:100%; min-height:120px; padding:14px; border:1px solid #cfd8dc; border-radius:8px; font-size:1rem; box-sizing:border-box; margin-bottom:15px;"></textarea>
+                <button class="btn-primary" onclick="revealOpen()">Voorbeeldantwoord onthullen</button>
                 <div id="open-answer" class="hidden" style="margin: 25px 0; padding: 25px; background: #fdfdfd; border-left: 8px solid var(--primary); line-height: 1.8; box-shadow: inset 0 0 10px rgba(0,0,0,0.02);"></div>
                 <div id="open-eval" class="hidden">
                     <p class="bold">Had je de essentie van dit antwoord goed?</p>
@@ -139,6 +168,9 @@
             <button class="btn-primary" onclick="renderTable('all')">Alles tonen</button>
             <button class="btn-primary" onclick="renderTable('1')">Module 1</button>
             <button class="btn-primary" onclick="renderTable('2')">Module 2</button>
+            <button class="btn-primary" onclick="renderTable('3')">Module 3</button>
+            <span style="margin-left:20px;">Lesstof module 3:</span>
+            <select id="topic-table-select" onchange="renderTable('3', this.value)" style="padding:10px; border-radius:8px; border:1px solid #b7c9bf;"></select>
         </div>
         <div class="table-container">
             <table>
@@ -207,9 +239,96 @@ const rawData = [
     {m:"2", q:"Welke documenten moeten aanwezig zijn in het installatiedossier van een drukvat (PED)?", mc:null, a:"CE-verklaring, handleiding, ontwerptekeningen, Keuring voor Ingebruikneming (KvI) en eerdere herkeuringsrapporten."},
     {m:"2", q:"Wat is het primaire technische verschil tussen PGS 15 beschermingsniveau 1 en niveau 3?", mc:null, a:"Niveau 1: Actieve beveiliging (automatische blusinstallatie). Niveau 3: Passieve beveiliging (brandcompartimentering)."},
     {m:"2", q:"Is natronloog een Seveso of ARIE stof? Indien ja, geef ook de drempelwaarde.", mc:null, a:"Het is een ARIE stof (drempelwaarde 15 ton). Het is geen Seveso stof."},
-    {m:"2", q:"Wat staat er wettelijk in de kennisgeving van een Seveso-inrichting?", mc:null, a:"Gegevens exploitant, lijst gevaarlijke stoffen (aard/hoeveelheid), activiteiten, omgevingsfactoren en indien HDI: informatie over PR en aandachtsgebieden."}
+    {m:"2", q:"Wat staat er wettelijk in de kennisgeving van een Seveso-inrichting?", mc:null, a:"Gegevens exploitant, lijst gevaarlijke stoffen (aard/hoeveelheid), activiteiten, omgevingsfactoren en indien HDI: informatie over PR en aandachtsgebieden."},
+
+    // Module 3 - Nieuwe oefenset moduletoets 3
+    {"m": "3", "topic": "ATEX", "q": "ATEX 1. Welke combinatie beschrijft de kern van ATEX het beste?", "mc": ["A. Brandstof, zuurstof en druk", "B. Explosieve atmosfeer, ontstekingsbron en maatregelen om werknemers en installaties te beschermen", "C. Brandbare stof in lucht waarbij verbranding zich na ontsteking uitbreidt naar het niet verbrande mengsel", "D. Een brandbare vloeistof boven het vlampunt zonder ontstekingsbron"], "a": "B. ATEX draait om het herkennen en beheersen van explosieve atmosferen, het voorkomen van ontsteking en het beschermen van werknemers en installaties. De exacte definitie van een explosieve atmosfeer blijft onderdeel van de ATEX-basisstof.", "level": "Basis", "type": "Meerkeuze"},
+    {"m": "3", "topic": "ATEX", "q": "ATEX 2. ATEX 153 gaat primair over het ontwerp en de certificering van explosieveilig materieel.", "mc": ["A. Waar", "B. Niet waar"], "a": "B. Niet waar. ATEX 153 richt zich op bescherming van werknemers. ATEX 114 gaat over apparatuur en beveiligingssystemen voor explosiegevaarlijke omgevingen.", "level": "Basis", "type": "Waar/niet waar"},
+    {"m": "3", "topic": "ATEX", "q": "ATEX 3. Welke nationale regeling hoort het meest direct bij ATEX 114?", "mc": ["A. Arbowet artikel 5", "B. Arbobesluit paragraaf 2a", "C. Warenwetbesluit explosieveilig materieel 2016", "D. Arbeidstijdenbesluit"], "a": "C. ATEX 114 is in Nederland gekoppeld aan het Warenwetbesluit explosieveilig materieel 2016.", "level": "Basis/middel", "type": "Meerkeuze"},
+    {"m": "3", "topic": "ATEX", "q": "ATEX 4. Een bedrijf gebruikt brandbare oplosmiddelen in een mengruimte. Noem vier onderdelen die minimaal in het explosieveiligheidsdocument terug moeten komen. Raadpleeg eventueel Arbobesluit ATEX en AI-34.", "mc": null, "a": "Voorbeeldantwoord in steekwoorden: identificatie en beoordeling van explosierisico’s, zone-indeling, getroffen maatregelen, veilige inrichting en gebruik van arbeidsplaatsen en arbeidsmiddelen, onderhoud en bediening, en bij meerdere werkgevers ook de coördinatie.", "level": "Middel", "type": "Open vraag"},
+    {"m": "3", "topic": "ATEX", "q": "ATEX 5. Een onderhoudsteam wil een niet EX-gemarkeerde accuboormachine gebruiken in zone 1. Wat is het juiste uitgangspunt?", "mc": ["A. Toegestaan als de klus korter dan 10 minuten duurt", "B. Toegestaan als continu gasmeting wordt uitgevoerd", "C. Niet geschikt totdat aantoonbaar is beoordeeld dat gebruik geen explosiegevaar oplevert en de zone geschikt is voor die apparatuur", "D. Toegestaan als de werkvergunning is ondertekend"], "a": "C. Niet EX-gemarkeerde arbeidsmiddelen zijn niet geschikt voor gebruik in een gevarenzone totdat aantoonbaar is dat gebruik veilig en passend is. Voor zone 1 is normale apparatuur in beginsel niet acceptabel.", "level": "Middel", "type": "Meerkeuze"},
+    {"m": "3", "topic": "ATEX", "q": "ATEX 6. Beoordeel de stellingen. I. In zone 0 moet categorie 1 apparatuur worden toegepast. II. In zone 2 mag categorie 1, 2 of 3 apparatuur worden toegepast. III. In zone 21 is categorie 3 apparatuur voldoende. Welke combinatie is juist?", "mc": ["A. Alleen I", "B. I en II", "C. II en III", "D. I, II en III"], "a": "B. In zone 0 of 20 hoort categorie 1. In zone 2 of 22 kan categorie 1, 2 of 3. In zone 21 is categorie 1 of 2 nodig, niet categorie 3.", "level": "Middel", "type": "Stellingen"},
+    {"m": "3", "topic": "ATEX", "q": "ATEX 7. Een tank met brandbare vloeistof is normaal geïnertiseerd. Voor onderhoud wordt de inertisering gestopt en wordt buitenlucht ingeblazen terwijl restproduct aanwezig is. Leg uit waarom de explosierisicosituatie hierdoor verandert.", "mc": null, "a": "Voorbeeldantwoord in steekwoorden: door toevoegen van zuurstof kan het mengsel in het explosiegebied komen; restproduct kan uitdampen; ventilatie kan menging geven maar ook pockets laten bestaan; aannames over inert gebied of zonering zijn niet automatisch geldig; gasmetingen moeten representatief zijn voor meerdere niveaus en locaties.", "level": "Moeilijk", "type": "Open vraag"},
+    {"m": "3", "topic": "ATEX", "q": "ATEX 8. Welke volgorde past het best bij de ATEX arbeidshygiënische strategie?", "mc": ["A. Gevolgen beperken, ontsteking vermijden, explosieve atmosfeer voorkomen", "B. Ontsteking vermijden, explosieve atmosfeer voorkomen, gevolgen beperken", "C. Explosieve atmosfeer voorkomen, ontsteking vermijden, gevolgen beperken", "D. PBM toepassen, ventileren, blussen"], "a": "C. Eerst voorkomen dat een explosieve atmosfeer ontstaat, daarna ontsteking vermijden, daarna gevolgen beperken.", "level": "Middel", "type": "Meerkeuze"},
+    {"m": "3", "topic": "ATEX", "q": "ATEX 9. Slijpen in een gevarenzone kan worden toegestaan als de zone 2 is en de slijptol kort wordt gebruikt.", "mc": ["A. Waar", "B. Niet waar"], "a": "B. Niet waar. Slijpen veroorzaakt tijdens normaal gebruik een actieve ontstekingsbron. Dit is alleen verdedigbaar als de gevarenzone voor de duur van het werk aantoonbaar is opgeheven of afdoende is beheerst.", "level": "Moeilijk", "type": "Waar/niet waar"},
+    {"m": "3", "topic": "ATEX", "q": "ATEX 10. Een productiebedrijf heeft een oude zone-indeling voor een stofinstallatie. Sinds kort wordt een fijner poeder gebruikt en blijft na productie zichtbaar stof op vloeren en constructies liggen. Welke drie redenen heb je als HVK om herziening van de zone-indeling of het EVD te adviseren?", "mc": null, "a": "Voorbeeldantwoord in steekwoorden: wijziging van stofeigenschappen, mogelijke wijziging van stofwolk- en stoflaagvorming, wijziging van ontstekingsgevoeligheid zoals MOE of MOT, onvoldoende schoon huishouden, en gewijzigde uitgangspunten onder de oude beoordeling.", "level": "Moeilijk", "type": "Open vraag"},
+    {"m": "3", "topic": "Elektrische veiligheid", "q": "Elektrische veiligheid 1. Wat is het beste onderscheid tussen werkrisico en installatierisico bij elektrische veiligheid?", "mc": ["A. Werkrisico gaat over vaste installaties, installatierisico over gereedschap", "B. Werkrisico gaat over werkzaamheden aan of nabij elektrische installaties, installatierisico over gebruik of aanwezigheid van installaties en apparatuur", "C. Werkrisico bestaat alleen bij hoogspanning, installatierisico alleen bij laagspanning", "D. Werkrisico is juridisch geregeld, installatierisico niet"], "a": "B. Werkrisico betreft werkzaamheden aan of nabij een elektrische installatie. Installatierisico betreft het risico door gebruik of aanwezigheid van installaties en apparatuur.", "level": "Basis", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Elektrische veiligheid", "q": "Elektrische veiligheid 2. Een laagspanningsinstallatie kan geen dodelijk risico opleveren, omdat hoogspanning pas begint boven 1000 V wisselspanning of 1500 V gelijkspanning.", "mc": ["A. Waar", "B. Niet waar"], "a": "B. Niet waar. Ook laagspanning kan leiden tot elektrocutie, brand, verbranding of indirect letsel. De grens tussen laagspanning en hoogspanning zegt niets over afwezigheid van gevaar.", "level": "Basis", "type": "Waar/niet waar"},
+    {"m": "3", "topic": "Elektrische veiligheid", "q": "Elektrische veiligheid 3. Welke spanning wordt onder normale omstandigheden als veilige spanning beschouwd?", "mc": ["A. Lager dan 230 V wisselspanning en lager dan 400 V gelijkspanning", "B. Lager dan 110 V wisselspanning en lager dan 230 V gelijkspanning", "C. Lager dan 50 V wisselspanning en lager dan 120 V gelijkspanning", "D. Lager dan 24 V wisselspanning en lager dan 50 V gelijkspanning"], "a": "C. Onder normale omstandigheden geldt lager dan 50 V wisselspanning en lager dan 120 V gelijkspanning als veilige spanning. In bijzondere omstandigheden kan een lagere grens nodig zijn.", "level": "Basis", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Elektrische veiligheid", "q": "Elektrische veiligheid 4. Beoordeel de stellingen. I. Arbobesluit artikel 3.4 gaat onder meer over veilige elektrische installaties en bijgewerkte schema’s. II. Arbobesluit artikel 3.5 gaat onder meer over werkzaamheden aan of nabij elektrische installaties. III. NEN 3140 is zelf wetgeving en vervangt het Arbobesluit. Welke combinatie is juist?", "mc": ["A. Alleen I", "B. I en II", "C. II en III", "D. I, II en III"], "a": "B. Artikel 3.4 gaat over elektrische installaties en documentatie. Artikel 3.5 gaat over werkzaamheden aan of nabij elektrische installaties. NEN 3140 is geen wet, maar geeft praktische invulling aan doelvoorschriften.", "level": "Middel", "type": "Stellingen"},
+    {"m": "3", "topic": "Elektrische veiligheid", "q": "Elektrische veiligheid 5. Een operator reset regelmatig een beveiliging in een schakelkast. Daarbij kan hij in aanraking komen met spanningvoerende delen. Welke conclusie past het best?", "mc": ["A. Dit is gewone bediening en mag door iedereen worden gedaan", "B. Dit is gevaarlijke bediening en vraagt deskundigheid, instructie en bevoegdheid", "C. Dit mag alleen door een externe inspectie-instelling", "D. Dit valt alleen onder machineveiligheid en niet onder elektrische veiligheid"], "a": "B. Als bij bediening gevaar voor aanraking of kortsluiting bestaat, gaat het om gevaarlijke bedieningswerkzaamheden. Deze vragen deskundigheid, instructie en bevoegdheid.", "level": "Middel", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Elektrische veiligheid", "q": "Elektrische veiligheid 6. Noem vijf controlepunten bij een visuele inspectie van elektrisch handgereedschap voordat het opnieuw wordt ingezet op een projectlocatie.", "mc": null, "a": "Voorbeeldantwoord in steekwoorden: behuizing intact, aansluitsnoer onbeschadigd, stekker in goede staat, trekontlasting functioneel, bedieningsknoppen intact, geen zichtbare interne aders, markeringen leesbaar, keuringsstatus aanwezig.", "level": "Middel", "type": "Open vraag"},
+    {"m": "3", "topic": "Elektrische veiligheid", "q": "Elektrische veiligheid 7. Een onderhoudsmonteur wil in een verdeelkast meten om een storing te vinden. Welke uitspraak is het meest juist?", "mc": ["A. Meten is geen werken onder spanning, omdat er niets wordt losgenomen", "B. Meten kan elektrische risico’s geven door aanraking en kortsluiting en vraagt vooraf beoordeling van meetinstrument, meetpennen, meetsnoeren en kortsluitvermogen", "C. Meten is altijd toegestaan als geïsoleerde handschoenen worden gedragen", "D. Meten is alleen verboden bij hoogspanning"], "a": "B. Meten kan aanrakingsgevaar en kortsluitgevaar opleveren. De veilige uitvoering hangt af van instrument, aansluitingen, meetpennen, locatie in de installatie en kortsluitvermogen.", "level": "Moeilijk", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Elektrische veiligheid", "q": "Elektrische veiligheid 8. Een schoolgebouw heeft een elektrische installatie uit 1970. De installatie voldoet mogelijk nog aan de norm van destijds. Welke afweging moet je als HVK maken voordat je adviseert om wel of niet te moderniseren?", "mc": null, "a": "Voorbeeldantwoord in steekwoorden: toets aan norm bij aanleg of renovatie, vergelijk met huidige stand van techniek, beoordeel gebruikersgroep, omgevingsrisico’s, aanwezigheid van kinderen, aardlekschakelaars, kindveilige contactdozen, inspectieresultaten en afwijking ten opzichte van huidig veiligheidsniveau.", "level": "Moeilijk", "type": "Open vraag"},
+    {"m": "3", "topic": "Elektrische veiligheid", "q": "Elektrische veiligheid 9. Als elektrotechnisch onderhoud volledig is uitbesteed, vervalt voor de opdrachtgever het elektrische veiligheidsrisico in de RI&E.", "mc": ["A. Waar", "B. Niet waar"], "a": "B. Niet waar. Uitbesteding neemt de werkgeversverantwoordelijkheid niet weg. De opdrachtgever moet het installatierisico blijven beheersen en moet weten welke werksituaties wel of niet toegestaan zijn.", "level": "Moeilijk", "type": "Waar/niet waar"},
+    {"m": "3", "topic": "Elektrische veiligheid", "q": "Elektrische veiligheid 10. Een technische dienst wil onder spanning werken om productiestilstand te voorkomen. Formuleer als HVK een kort advies op basis van Arbobesluit artikel 3.5 en NEN 3140.", "mc": null, "a": "Voorbeeldantwoord in steekwoorden: uitgangspunt is spanningsloos werken. Onder spanning werken is alleen verdedigbaar bij dringende noodzaak, uitdrukkelijke opdracht aan een bevoegde werknemer, geschikte installatie en doeltreffende maatregelen. Economische redenen of planning zijn op zichzelf onvoldoende. Adviseer spanningsloos voorbereiden, LOTO toepassen en de werkverantwoordelijke laten beoordelen.", "level": "Moeilijk", "type": "Open vraag"},
+    {"m": "3", "topic": "Machineveiligheid", "q": "Machineveiligheid 1. Welke uitspraak over arbeidsmiddelen is het meest juist?", "mc": ["A. Alleen machines met CE markering vallen onder Arbobesluit hoofdstuk 7", "B. Alleen aangedreven machines vallen onder Arbobesluit hoofdstuk 7", "C. Arbeidsmiddelen moeten geschikt zijn voor het werk, de omstandigheden en de op de arbeidsplaats aanwezige gevaren", "D. Arbeidsmiddelen zonder CE markering hoeven niet te worden beoordeeld als ze al lang in gebruik zijn"], "a": "C. Arbeidsmiddelen moeten geschikt zijn voor het werk, de omstandigheden en de aanwezige of toegevoegde gevaren.", "level": "Basis", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Machineveiligheid", "q": "Machineveiligheid 2. Een CE markering betekent dat de werkgever geen eigen beoordeling meer hoeft te doen bij ingebruikname.", "mc": ["A. Waar", "B. Niet waar"], "a": "B. Niet waar. CE geeft een vermoeden van overeenstemming met productregelgeving, maar de werkgever moet nog steeds beoordelen of het arbeidsmiddel geschikt is voor werk, omgeving, gebruik en RI&E.", "level": "Basis", "type": "Waar/niet waar"},
+    {"m": "3", "topic": "Machineveiligheid", "q": "Machineveiligheid 3. Welke combinatie hoort het best bij de rol van de HVK bij een nieuw arbeidsmiddel?", "mc": ["A. Ontwerpen, certificeren en CE markeren", "B. Afname ondersteunen, RI&E actualiseren, documentatie controleren, keuringsregime en instructie adviseren", "C. Alleen controleren of de machine start en stopt", "D. Alleen nagaan of de leverancier een factuur en handleiding heeft geleverd"], "a": "B. De HVK ondersteunt bij veilige ingebruikname, RI&E, documentatie, keuring, instructie en borging van restrisico’s.", "level": "Basis/middel", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Machineveiligheid", "q": "Machineveiligheid 4. Beoordeel de stellingen. I. Een arbeidsmiddel waarvan de veiligheid afhangt van juiste installatie moet vóór eerste ingebruikname worden gekeurd. II. Een arbeidsmiddel dat door slijtage, corrosie of veroudering kan verslechteren moet zo vaak worden gekeurd als nodig is voor veilige staat. III. Keuringen hoeven niet te worden vastgelegd als de keurder deskundig is. Welke combinatie is juist?", "mc": ["A. Alleen I", "B. I en II", "C. II en III", "D. I, II en III"], "a": "B. Keuring na installatie en keuring bij verslechterende invloeden zijn nodig. Schriftelijke bewijsstukken moeten aanwezig zijn.", "level": "Middel", "type": "Stellingen"},
+    {"m": "3", "topic": "Machineveiligheid", "q": "Machineveiligheid 5. Een bedrijf neemt een nieuwe kanteltafel in gebruik. Noem vijf punten die je als HVK minimaal wilt controleren voordat je adviseert over ingebruikname.", "mc": null, "a": "Voorbeeldantwoord in steekwoorden: CE markering indien van toepassing, verklaring van overeenstemming, begrijpelijke gebruiksinstructie, afscherming bewegende delen, noodstop en bediening, loskoppelen van krachtbronnen, onderhoudsveiligheid, keuringsplicht, opname in RI&E, instructie en deskundigheid gebruikers.", "level": "Middel", "type": "Open vraag"},
+    {"m": "3", "topic": "Machineveiligheid", "q": "Machineveiligheid 6. Wat is volgens EN ISO 12100 de juiste volgorde bij risicobeoordeling?", "mc": ["A. PBM kiezen, instructie geven, risico inschatten, gevaren zoeken", "B. Grenzen bepalen, gevaren identificeren, risico inschatten, risico evalueren, risico reduceren", "C. Ongevallenhistorie bekijken, CE verklaring controleren, machine gebruiken", "D. Risico evalueren, gevaren negeren, restrisico accepteren"], "a": "B. EN ISO 12100 beschrijft deze systematische volgorde voor risicobeoordeling en risicoreductie.", "level": "Middel", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Machineveiligheid", "q": "Machineveiligheid 7. Voorzienbaar verkeerd gebruik hoeft niet in de risicobeoordeling te worden meegenomen, omdat het niet het bedoelde gebruik is.", "mc": ["A. Waar", "B. Niet waar"], "a": "B. Niet waar. De grenzen van de machine omvatten ook redelijkerwijs voorzienbaar verkeerd gebruik.", "level": "Middel", "type": "Waar/niet waar"},
+    {"m": "3", "topic": "Machineveiligheid", "q": "Machineveiligheid 8. Een operator opent een beweegbare afscherming om een productstoring sneller te verhelpen. De machine kan daarna direct opnieuw starten zodra de deur sluit. Welke beoordeling past het best?", "mc": ["A. Acceptabel, want de operator kiest daar zelf voor", "B. Acceptabel als de instructie zegt dat handen uit de machine moeten blijven", "C. Kritisch, omdat gevaarlijke bewegingen, onverwacht starten en interventietaken in de risicobeoordeling moeten worden meegenomen", "D. Alleen een probleem als er eerder een ongeval is gebeurd"], "a": "C. Interventies zoals vastlopen, reinigen, resetten en storingsherstel horen bij de taakanalyse. Onverwacht starten en gevaarlijke bewegingen moeten technisch worden beheerst.", "level": "Moeilijk", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Machineveiligheid", "q": "Machineveiligheid 9. Een bestaande productielijn wordt uitgebreid met een extra transportband en een robotcel. Welke vraag moet je als HVK eerst laten beantwoorden voordat je alleen over een aanpassing spreekt?", "mc": null, "a": "Voorbeeldantwoord in steekwoorden: of de wijziging een ingrijpende of substantiële wijziging is, of nieuwe gevaren ontstaan, of bestaande risico’s toenemen, of beschermingsmaatregelen nog toereikend zijn, welke invloed de wijziging heeft op de bestaande lijn en of fabrikantsverplichtingen ontstaan.", "level": "Moeilijk", "type": "Open vraag"},
+    {"m": "3", "topic": "Machineveiligheid", "q": "Machineveiligheid 10. Een machine is CE gemarkeerd, maar de werkgever heeft de afscherming aangepast zodat sneller gereinigd kan worden. Er is geen risicobeoordeling gemaakt. Wat is het sterkste HVK advies?", "mc": ["A. Geen probleem zolang de productiechef akkoord is", "B. Alleen een nieuwe instructie ophangen", "C. Stoppen met de gewijzigde werkwijze totdat een risicobeoordeling aantoont of de wijziging ingrijpend is en of de beschermingsmaatregelen nog toereikend zijn", "D. Alleen de leverancier vragen om een nieuwe sticker"], "a": "C. Bij wijziging van een machine moet worden beoordeeld of nieuwe gevaren ontstaan, risico’s toenemen en conformiteitsgevolgen optreden. Alleen instructie is onvoldoende.", "level": "Moeilijk", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Werken op hoogte", "q": "Werken op hoogte 1. Welke redenering past het best bij de arbeidshygiënische strategie bij werken op hoogte?", "mc": ["A. Eerst persoonlijke valbeveiliging kiezen, daarna pas collectieve maatregelen", "B. Eerst beoordelen of werken op hoogte vermeden kan worden, daarna collectieve maatregelen, pas daarna persoonlijke valbeveiliging", "C. Eerst een ladder kiezen, tenzij die niet beschikbaar is", "D. Eerst helm en harnas verplicht stellen, daarna de werkmethode bepalen"], "a": "B. De voorkeursvolgorde is vermijden van werken op hoogte, collectieve maatregelen om vallen te voorkomen en pas daarna persoonlijke valbeveiliging om valafstand en gevolgen te beperken.", "level": "Basis", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Werken op hoogte", "q": "Werken op hoogte 2. Een ladder is een geschikt arbeidsmiddel voor werken op hoogte zolang de werkhoogte lager is dan 2,5 meter.", "mc": ["A. Waar", "B. Niet waar"], "a": "B. Niet waar. De keuze hangt ook af van taakduur, krachtuitoefening, reikwijdte, ondergrond, stabiliteit, toegang, weer en veilige steun en houvast.", "level": "Basis", "type": "Waar/niet waar"},
+    {"m": "3", "topic": "Werken op hoogte", "q": "Werken op hoogte 3. Welke combinatie hoort bij een juiste beoordeling van laddergebruik als werkplek?", "mc": ["A. Stahoogte, effectieve statijd, krachtuitoefening en reikwijdte", "B. Alleen werkhoogte en ervaring van de medewerker", "C. Alleen type ladder en keuringssticker", "D. Windrichting, kleur van de ladder en merk van het gereedschap"], "a": "A. Stahoogte, effectieve statijd, krachtuitoefening en reikwijdte zijn kerncriteria. Bij meer dan één armlengte reikwijdte is laddergebruik als werkplek niet toegestaan.", "level": "Basis/middel", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Werken op hoogte", "q": "Werken op hoogte 4. Beoordeel de stellingen. I. Collectieve maatregelen krijgen voorrang boven persoonlijke veiligheidsmaatregelen. II. Bij tijdelijke werkzaamheden op hoogte moet het arbeidsmiddel zijn afgestemd op de aard van het werk en de voorzienbare belasting. III. Economische argumenten mogen zelfstandig bepalend zijn voor de keuze van een ladder. Welke combinatie is juist?", "mc": ["A. Alleen I", "B. I en II", "C. II en III", "D. I, II en III"], "a": "B. Collectieve maatregelen hebben voorrang. Het arbeidsmiddel moet passen bij werk en belasting. Economische argumenten mogen niet zelfstandig bepalend zijn.", "level": "Middel", "type": "Stellingen"},
+    {"m": "3", "topic": "Werken op hoogte", "q": "Werken op hoogte 5. Een ervaren dakdekker werkt op een plat dak van 2,8 meter hoog. In het dak zit een gat voor een lichtkoepel dat tijdelijk is afgedekt met isolatiemateriaal. Welke drie tekortkomingen zie je in de voorbereiding?", "mc": null, "a": "Voorbeeldantwoord in steekwoorden: sparingsgat niet zichtbaar en niet fysiek beveiligd, valgevaar door zwak of niet draagkrachtig oppervlak, onveilige werkvolgorde, onvoldoende TRA of project RI&E, onvoldoende markering of afzetting, ervaring of VCA vervangt geen technische beheersmaatregel.", "level": "Middel", "type": "Open vraag"},
+    {"m": "3", "topic": "Werken op hoogte", "q": "Werken op hoogte 6. Welke maatregel hoort het meest bij het voorkomen van vallende voorwerpen?", "mc": ["A. Alleen een helm verplicht stellen beneden de werkplek", "B. Alleen waarschuwingsborden plaatsen", "C. Kleine materialen in bakken bewaren, sparingen dichtleggen, alleen noodzakelijke materialen meenemen en gereedschap borgen", "D. Alleen de medewerker vragen beter op te letten"], "a": "C. Vallende voorwerpen voorkom je met bron- en collectieve maatregelen zoals materiaalbeheersing, afdekken, borgen, afzetten en beperken van losse materialen.", "level": "Middel", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Werken op hoogte", "q": "Werken op hoogte 7. Een CE gemarkeerd harnas met vallijn is altijd geschikt voor iedere werksituatie op hoogte.", "mc": ["A. Waar", "B. Niet waar"], "a": "B. Niet waar. CE betekent voldoen aan minimale producteisen, maar zegt niet dat het systeem geschikt is voor de specifieke taak, randbelasting, ankerpunt, valfactor, valvrijheid, pendulewerking of redding.", "level": "Middel", "type": "Waar/niet waar"},
+    {"m": "3", "topic": "Werken op hoogte", "q": "Werken op hoogte 8. Een monteur werkt met een 2 meter vallijn en valdemper waarbij het ankerpunt op voetniveau ligt. Welke beoordeling is het meest juist?", "mc": ["A. Dit is altijd veilig omdat een valdemper aanwezig is", "B. Dit vraagt beoordeling van valfactor, benodigde valvrijheid, ondergrond of obstakels en reddingsmogelijkheid", "C. Dit is alleen relevant boven 10 meter hoogte", "D. Dit is toegestaan als de monteur VOL VCA heeft"], "a": "B. Valfactor, valvrijheid, positie van het ankerpunt, obstakels, redding en hangtrauma moeten vooraf worden beoordeeld.", "level": "Moeilijk", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Werken op hoogte", "q": "Werken op hoogte 9. Je beoordeelt een rolsteiger op een bouwplaats. Noem zes punten die je minimaal controleert voordat de steiger wordt gebruikt.", "mc": null, "a": "Voorbeeldantwoord in steekwoorden: opgebouwd volgens gebruiksaanwijzing, standaardconfiguratie of berekening aanwezig, stabiele ondergrond, juiste leuningen en kantplanken, vloeren volledig en geborgd, diagonalen en stabilisatoren volgens voorschrift, wielen op de rem, niet verplaatsen met personen erop, goede staat, jaarlijkse keuring en montage door geïnstrueerde personen.", "level": "Moeilijk", "type": "Open vraag"},
+    {"m": "3", "topic": "Werken op hoogte", "q": "Werken op hoogte 10. Een opdrachtgever wil gevelwerk laten uitvoeren met toegang en positionering met lijnen, omdat een steiger duur en lastig te plaatsen is. Wat is het juiste HVK standpunt?", "mc": ["A. Akkoord, zolang gecertificeerde klimmers worden ingezet", "B. Niet akkoord, want lijnen zijn altijd verboden", "C. Alleen verdedigbaar als uit de RI&E blijkt dat een veiliger arbeidsmiddel redelijkerwijs niet mogelijk is, met twee onafhankelijk verankerde lijnen, planning, supervisie en reddingsplan", "D. Akkoord als de werkzaamheden korter dan één dag duren"], "a": "C. Lijntechnieken zijn geen eerste keuze. De inzet vraagt onderbouwing, twee onafhankelijk verankerde lijnen, failsafe apparatuur, planning, supervisie en reddingsplan.", "level": "Moeilijk", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Horizontaal en verticaal transport", "q": "Horizontaal en verticaal transport 1. Welke combinatie geeft het beste wettelijke kader voor verticaal transport met hijskranen en hijsgereedschap?", "mc": ["A. Alleen de Wegenverkeerswet en het Bouwbesluit", "B. Arbobesluit hoofdstuk 7, Warenwetbesluit machines, Warenwetregeling machines en relevante arbocatalogi", "C. Alleen de Arbowet artikel 11", "D. Alleen de handleiding van de kraanfabrikant"], "a": "B. Verticaal transport raakt veilig gebruik van arbeidsmiddelen, productveiligheid, certificering en branche-invulling.", "level": "Basis", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Horizontaal en verticaal transport", "q": "Horizontaal en verticaal transport 2. Een lastmomentbegrenzer mag worden overbrugd als de machinist ervaren is en de hijsklus anders niet kan worden uitgevoerd.", "mc": ["A. Waar", "B. Niet waar"], "a": "B. Niet waar. Het overbruggen van een beveiliging is alleen aanvaardbaar in strikt omschreven situaties zoals voorgeschreven door de fabrikant, bijvoorbeeld bij opbouw of afbouw. Tijdens normale hijswerkzaamheden is dit een ernstige afwijking.", "level": "Basis", "type": "Waar/niet waar"},
+    {"m": "3", "topic": "Horizontaal en verticaal transport", "q": "Horizontaal en verticaal transport 3. Wat is de functie van een lastmomentbegrenzer?", "mc": ["A. Het automatisch corrigeren van scheef aangeslagen lasten", "B. Het bewaken van de combinatie van last, vlucht en kraanconfiguratie om overbelasting te voorkomen", "C. Het voorkomen dat een last gaat slingeren", "D. Het vervangen van een hijsplan"], "a": "B. Een lastmomentbegrenzer bewaakt of de kraan binnen de toegestane belasting blijft bij de gekozen configuratie. Het systeem vervangt geen hijsplan of toezicht.", "level": "Basis/middel", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Horizontaal en verticaal transport", "q": "Horizontaal en verticaal transport 4. Beoordeel de stellingen. I. Bij hijsen met twee kranen aan één last moet de communicatie tussen machinisten zijn geregeld. II. Bij hijsen met twee kranen aan één last moet deskundig toezicht zijn geregeld. III. Bij hijsen met twee kranen aan één last mag elke kraan tot 100 procent van de tabelwaarde worden benut. Welke combinatie is juist?", "mc": ["A. Alleen I", "B. I en II", "C. II en III", "D. I, II en III"], "a": "B. Communicatie en deskundig toezicht zijn essentieel. Volledige benutting van de tabelwaarde past niet bij de extra onzekerheden van meerdere kranen aan één last.", "level": "Middel", "type": "Stellingen"},
+    {"m": "3", "topic": "Horizontaal en verticaal transport", "q": "Horizontaal en verticaal transport 5. Een bedrijf wil een gevelplaat vervangen met twee kranen: één kraan hijst de plaat, de andere kraan brengt medewerkers omhoog in een werkbak. Noem vijf punten die je als HVK minimaal wilt laten uitwerken voordat het werk start.", "mc": null, "a": "Voorbeeldantwoord in steekwoorden: noodzaak van de werkbak, onderbouwing waarom een veiliger alternatief niet redelijkerwijs mogelijk is, hijsplan, kraanopstelling en stempelplan, beoordeling ondergrond, windcriteria, communicatie, deskundig toezicht, reddingsplan, afzetting gevarenzone, kwalificaties machinisten, keuring van werkbak en hijsgereedschap, afstemming tussen betrokken partijen.", "level": "Middel", "type": "Open vraag"},
+    {"m": "3", "topic": "Horizontaal en verticaal transport", "q": "Horizontaal en verticaal transport 6. Welke uitspraak over een werkbak voor personen aan een kraan is het meest juist?", "mc": ["A. Een werkbak is een normaal vervoermiddel voor personen als de kraan voldoende capaciteit heeft", "B. Een werkbak mag worden ingezet als de medewerker een harnas draagt", "C. Een werkbak is alleen verdedigbaar onder strikte voorwaarden, na beoordeling van noodzaak, alternatieven, kraan, werkbak, toezicht, communicatie en redding", "D. Een werkbak is altijd verboden"], "a": "C. Personen hijsen met een kraan en werkbak is geen standaardoplossing. De inzet vraagt expliciete beoordeling en borging van technische en organisatorische voorwaarden.", "level": "Middel", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Horizontaal en verticaal transport", "q": "Horizontaal en verticaal transport 7. Een last wordt met vier hijspunten gehesen. Waarom is dit veiligheidskundig kritisch?", "mc": ["A. Vier hijspunten zijn altijd stabieler dan drie", "B. De lastverdeling is bij vier of meer hijspunten vaak statisch onbepaald, waardoor niet vanzelf bekend is welke kraan of welk hijspunt welke belasting krijgt", "C. Vier hijspunten zijn alleen toegestaan bij handmatig hijsen", "D. Het probleem speelt alleen bij lasten onder 1 ton"], "a": "B. Bij vier of meer hijspunten kan de belasting ongelijk worden verdeeld. Zonder berekening of gecontroleerde methode kan één punt of kraan overbelast raken.", "level": "Moeilijk", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Horizontaal en verticaal transport", "q": "Horizontaal en verticaal transport 8. Noem zes factoren die je beoordeelt bij een hijsplan voor een complexe hijsoperatie.", "mc": null, "a": "Voorbeeldantwoord in steekwoorden: gewicht van de last, zwaartepunt, positie en sterkte van hijspunten, hijsgereedschap en aanslagmethode, kraanconfiguratie, vlucht, mastlengte, ballast, stempelpositie, ondergrondbelasting, windbelasting, draaibereik, obstakels, overlap met andere kranen, communicatie, toezicht, dynamische effecten, scheefstand, val- of knelzones en noodscenario.", "level": "Moeilijk", "type": "Open vraag"},
+    {"m": "3", "topic": "Horizontaal en verticaal transport", "q": "Horizontaal en verticaal transport 9. Welke maatregel hoort bij een goed verkeersplan voor horizontaal transport?", "mc": ["A. Alleen een maximumsnelheid ophangen", "B. Routes, looplijnen, draaicirkels, scheiding van voetgangers en voertuigen, zichtlijnen, verlichting, markering, laad- en loszones en noodroutes vastleggen", "C. Alleen heftruckchauffeurs instrueren", "D. Alleen hesjes verplicht stellen voor voetgangers"], "a": "B. Een verkeersplan beheerst de interactie tussen mensen, voertuigen, routes, zichtbaarheid, snelheid, laadprocessen en noodsituaties.", "level": "Middel", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Horizontaal en verticaal transport", "q": "Horizontaal en verticaal transport 10. Beoordeel de stellingen. I. Mobiele arbeidsmiddelen met eigen aandrijving mogen alleen worden bediend door werknemers met specifieke deskundigheid. II. Meerijden op mobiele arbeidsmiddelen is toegestaan als de rit kort is. III. Een mobiel arbeidsmiddel mag pas worden verlaten nadat het is stilgezet en tegen onbedoelde beweging is geborgd. Welke combinatie is juist?", "mc": ["A. Alleen I", "B. I en III", "C. II en III", "D. I, II en III"], "a": "B. Specifieke deskundigheid is vereist. Meerijden mag alleen op speciaal daarvoor ingerichte veilige plaatsen. Verlaten mag pas nadat het arbeidsmiddel is stilgezet en geborgd tegen onverwachte beweging.", "level": "Moeilijk", "type": "Stellingen"},
+    {"m": "3", "topic": "Besloten ruimten", "q": "Besloten ruimten 1. Welke omschrijving past het best bij een besloten ruimte in veiligheidskundige zin?", "mc": ["A. Elke ruimte zonder daglicht", "B. Elke kleine ruimte met één deur", "C. Een gesloten of deels open omgeving die niet is ontworpen voor verblijf van personen en waar activiteiten risico’s kunnen geven voor veiligheid, gezondheid of welzijn", "D. Elke ruimte waarin gas gemeten moet worden"], "a": "C. Het gaat niet alleen om afmetingen of daglicht, maar om de combinatie van ruimtekenmerken, toegankelijkheid, verblijfsgeschiktheid en de risico’s van de werkzaamheden.", "level": "Basis", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Besloten ruimten", "q": "Besloten ruimten 2. Als een ruimte niet klein is en goed bereikbaar lijkt, kan er geen sprake zijn van gevaar voor verstikking, bedwelming, vergiftiging, brand of explosie.", "mc": ["A. Waar", "B. Niet waar"], "a": "B. Niet waar. Gevaar voor VBVBE kan ook ontstaan bij beperkte ventilatie of bewust ingebrachte gassen, zelfs op plaatsen die niet klassiek als kleine besloten ruimte worden gezien.", "level": "Basis", "type": "Waar/niet waar"},
+    {"m": "3", "topic": "Besloten ruimten", "q": "Besloten ruimten 3. Wanneer is er volgens Arbobesluit artikel 3.5g in ieder geval sprake van gevaar voor verstikking?", "mc": ["A. Bij minder dan 21 volumeprocent zuurstof", "B. Bij minder dan 20 volumeprocent zuurstof", "C. Bij minder dan 18 volumeprocent zuurstof", "D. Alleen als iemand al klachten heeft"], "a": "C. Bij minder dan 18 volumeprocent zuurstof is in ieder geval sprake van gevaar voor verstikking. Bij zuurstof hoger dan 21 volumeprocent is er in ieder geval gevaar voor brand of explosie.", "level": "Basis/middel", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Besloten ruimten", "q": "Besloten ruimten 4. Beoordeel de stellingen. I. Voor betreding moet worden onderzocht of gevaar voor VBVBE aanwezig is. II. Als de eerste meting goed is, zijn herhalingsmetingen nooit nodig. III. Bij veranderende werkzaamheden, zoals lassen, reinigen of roeren van reststoffen, kan de atmosfeer opnieuw veranderen. Welke combinatie is juist?", "mc": ["A. Alleen I", "B. I en III", "C. II en III", "D. I, II en III"], "a": "B. Een vrijgavemeting is geen vrijbrief voor de rest van de dag. Bij veranderende omstandigheden of blijvend risico zijn herhalingsmetingen of continue bewaking nodig.", "level": "Middel", "type": "Stellingen"},
+    {"m": "3", "topic": "Besloten ruimten", "q": "Besloten ruimten 5. Een onderhoudsploeg moet een lege opslagtank betreden waarin eerder oplosmiddel zat. Noem zes onderwerpen die minimaal in de taakrisicoanalyse moeten terugkomen.", "mc": null, "a": "Voorbeeldantwoord in steekwoorden: noodzaak van betreding, restproduct en VIB, mogelijke dampvorming, zuurstofpercentage, LEL, toxische stoffen en grenswaarden, ventilatie, reinigen of spoelen zonder betreding, afblinden of fysiek scheiden van leidingen, LOTO van bewegende delen en energiebronnen, geschikte elektrische apparatuur, PBM en adembescherming, mangatwacht, communicatie, reddingsplan, werkvergunning en meetplan.", "level": "Middel", "type": "Open vraag"},
+    {"m": "3", "topic": "Besloten ruimten", "q": "Besloten ruimten 6. Welke uitspraak over gasmetingen is het meest juist?", "mc": ["A. Alleen zuurstof meten is voldoende als de ruimte leeg is", "B. Een deskundige meting richt zich op relevante stoffen, meetpunten, reactietijd, hoog midden laag meten, interpretatie en herhalingsfrequentie", "C. Een PID meter geeft altijd exact aan welke stof aanwezig is", "D. Meten is niet nodig als de mangatwacht aanwezig is"], "a": "B. De meting moet passen bij de verwachte gevaren. Een PID meter detecteert breed vluchtige organische stoffen en is niet automatisch stofspecifiek.", "level": "Middel", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Besloten ruimten", "q": "Besloten ruimten 7. Een filtermasker is geschikt voor betreding van een besloten ruimte met onbekende atmosfeer, zolang het filtertype vooraf is gekozen.", "mc": ["A. Waar", "B. Niet waar"], "a": "B. Niet waar. Bij onbekende atmosfeer, zuurstoftekort of hoge concentraties gevaarlijke stoffen is afhankelijke adembescherming niet voldoende. Dan is onafhankelijke adembescherming of eerst bronbeheersing nodig.", "level": "Middel", "type": "Waar/niet waar"},
+    {"m": "3", "topic": "Besloten ruimten", "q": "Besloten ruimten 8. Een tank is geventileerd en vrijgegeven. Tijdens het werk wordt begonnen met lassen en het verwijderen van oude coating. Wat is de juiste HVK beoordeling?", "mc": ["A. De eerdere vrijgave blijft geldig zolang de werkvergunning is ondertekend", "B. Alleen extra brandblussers plaatsen is voldoende", "C. De verandering in werkzaamheden kan nieuwe dampen, zuurstofverbruik, brand- of explosiegevaar veroorzaken en vraagt herbeoordeling van metingen, ventilatie, ontstekingsbronnen en maatregelen", "D. Alleen de mangatwacht hoeft extra op te letten"], "a": "C. Werkzaamheden kunnen de atmosfeer wijzigen. Het meetplan, ventilatieplan en de beheersmaatregelen moeten daarop worden aangepast.", "level": "Moeilijk", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Besloten ruimten", "q": "Besloten ruimten 9. Een medewerker raakt onwel in een besloten ruimte. De mangatwacht wil direct naar binnen om hem eruit te halen. Wat is je beoordeling en wat moet wel gebeuren?", "mc": null, "a": "Voorbeeldantwoord in steekwoorden: de mangatwacht mag de ruimte niet betreden. Hij activeert de noodprocedure, houdt contact als dat nog kan, alarmeert het getrainde reddingsteam, zorgt dat toegang vrij blijft en gebruikt alleen vooraf geregelde reddingsmiddelen. Redding moet vooraf zijn gepland, geoefend en voorzien van middelen zoals onafhankelijke adembescherming, driepoot of brancard. Alleen 112 bellen is onvoldoende als onmiddellijke hulp vereist is.", "level": "Moeilijk", "type": "Open vraag"},
+    {"m": "3", "topic": "Besloten ruimten", "q": "Besloten ruimten 10. Een sleuf van 1,6 meter diep wordt gebruikt voor rioolwerk. Er is kans op instorting, waterinstroom en schadelijke gassen. Welke conclusie past het best?", "mc": ["A. Dit is alleen grondwerk en heeft niets met besloten ruimten te maken", "B. Alleen talud of stempeling is voldoende", "C. De beoordeling moet zowel grondwerkgevaren als mogelijke VBVBE gevaren meenemen, inclusief veilige toegang, vluchtweg, metingen, afscherming, stabiliteit en noodmaatregelen", "D. Alleen een helm en laarzen zijn voldoende"], "a": "C. Een sleuf kan meerdere risicodomeinen combineren: bedelving, verdrinking, valgevaar, instabiliteit en schadelijke atmosfeer. Bij meer dan 1 meter diepte zijn stutten, bekisting, damwanden of een veilig talud nodig, tenzij deskundig anders onderbouwd.", "level": "Moeilijk", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Productieomgevingen en petrochemie", "q": "Productieomgevingen en petrochemie 1. Wat maakt veiligheid in de petrochemie wezenlijk complexer dan veel reguliere werkomgevingen?", "mc": ["A. Er werken meer aannemers", "B. Er is altijd sprake van explosiegevaar", "C. Arbeidsveiligheid, procesveiligheid, milieuveiligheid, externe veiligheid en logistieke veiligheid grijpen op elkaar in", "D. Er gelden minder regels, waardoor bedrijven zelf meer moeten bedenken"], "a": "C. De complexiteit zit in de samenhang tussen meerdere veiligheidsdomeinen. Een maatregel kan effect hebben op werknemers, installatie, omgeving, milieu en bedrijfscontinuïteit.", "level": "Basis", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Productieomgevingen en petrochemie", "q": "Productieomgevingen en petrochemie 2. Procesveiligheid richt zich vooral op het voorkomen van struikelen, vallen en snijwonden tijdens het werk.", "mc": ["A. Waar", "B. Niet waar"], "a": "B. Niet waar. Dat zijn vooral arbeidsveiligheidsrisico’s. Procesveiligheid richt zich op het voorkomen en beheersen van ongewenst vrijkomen van gevaarlijke stoffen of energie uit procesinstallaties.", "level": "Basis", "type": "Waar/niet waar"},
+    {"m": "3", "topic": "Productieomgevingen en petrochemie", "q": "Productieomgevingen en petrochemie 3. Wat betekent Loss of Containment?", "mc": ["A. Het uitvallen van een operator tijdens een dienst", "B. Het ongewenst vrijkomen van een stof of energie uit de installatie of omhulling", "C. Het verliezen van productiecapaciteit door onderhoud", "D. Het overschrijden van een milieudoelstelling zonder emissie"], "a": "B. Loss of Containment is het ongewenst vrijkomen van een gevaarlijke stof of energie uit een systeem, bijvoorbeeld door lekkage, breuk, overvullen of falen van een afsluiter.", "level": "Basis/middel", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Productieomgevingen en petrochemie", "q": "Productieomgevingen en petrochemie 4. Beoordeel de stellingen. I. Een gevaar is een intrinsieke eigenschap van een stof, installatie, taak of situatie die schade kan veroorzaken. II. Een risico gaat over de kans dat een ongewenst effect optreedt en de ernst van dat effect. III. Een gevolg is hetzelfde als een beheersmaatregel. Welke combinatie is juist?", "mc": ["A. Alleen I", "B. I en II", "C. II en III", "D. I, II en III"], "a": "B. Gevaar, risico en gevolg moeten scherp worden onderscheiden. Een beheersmaatregel is bedoeld om de kans op het scenario te verlagen of het effect te beperken.", "level": "Middel", "type": "Stellingen"},
+    {"m": "3", "topic": "Productieomgevingen en petrochemie", "q": "Productieomgevingen en petrochemie 5. Een fabriek verwerkt brandbare vloeistoffen onder verhoogde temperatuur en druk. Noem vijf typen informatie die je nodig hebt om een register van gevaren op te bouwen.", "mc": null, "a": "Voorbeeldantwoord in steekwoorden: aanwezige stoffen en hoeveelheden, fysisch-chemische eigenschappen zoals vlampunt en explosiegrenzen, procescondities zoals druk en temperatuur, opslag- en transportvormen, installatiedelen, taken zoals monstername of onderhoud, mogelijke ontstekingsbronnen, eerdere incidenten, aanwezige beheersmaatregelen en mogelijke gevolgen voor mens, milieu en omgeving.", "level": "Middel", "type": "Open vraag"},
+    {"m": "3", "topic": "Productieomgevingen en petrochemie", "q": "Productieomgevingen en petrochemie 6. Welke methode is vooral bedoeld om systematisch gevaren en bedieningsproblemen in een procesontwerp of procesinstallatie te identificeren?", "mc": ["A. LMRA", "B. HAZOP", "C. Werkplekinspectie", "D. Toolboxmeeting"], "a": "B. HAZOP is bedoeld om afwijkingen in procesparameters systematisch te onderzoeken en mogelijke oorzaken, gevolgen en beveiligingen zichtbaar te maken.", "level": "Middel", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Productieomgevingen en petrochemie", "q": "Productieomgevingen en petrochemie 7. Een HAZOP is alleen zinvol bij Seveso of ARIE bedrijven.", "mc": ["A. Waar", "B. Niet waar"], "a": "B. Niet waar. Een HAZOP is logisch bij procesinstallaties waar afwijkingen in druk, temperatuur, flow, niveau, samenstelling of reactiecondities tot gevaarlijke scenario’s kunnen leiden. Dat kan ook buiten Seveso of ARIE vallen.", "level": "Middel", "type": "Waar/niet waar"},
+    {"m": "3", "topic": "Productieomgevingen en petrochemie", "q": "Productieomgevingen en petrochemie 8. Een installatie is jaren geleden geHAZOPt. Sindsdien zijn grondstoffen, productiecapaciteit en onderhoudsstrategie gewijzigd. Wat is de juiste HVK beoordeling?", "mc": ["A. Geen actie nodig zolang er geen ongeval is geweest", "B. Alleen de RI&E arbeidsveiligheid actualiseren", "C. Management of Change toepassen en beoordelen of aanvullende studies zoals HAZOP, LOPA, SIL beoordeling of scenario update nodig zijn", "D. Alleen operators opnieuw instrueren"], "a": "C. Wijzigingen in proces, stoffen, capaciteit, onderhoud of bedrijfsvoering kunnen bestaande aannames aantasten. Via Management of Change moet worden vastgesteld welke risicoanalyses opnieuw of aanvullend nodig zijn.", "level": "Moeilijk", "type": "Meerkeuze"},
+    {"m": "3", "topic": "Productieomgevingen en petrochemie", "q": "Productieomgevingen en petrochemie 9. Leg uit waarom een beveiliging pas als betrouwbare barrière kan worden gezien als deze effectief, onafhankelijk en verifieerbaar is.", "mc": null, "a": "Voorbeeldantwoord in steekwoorden: effectief betekent dat de barrière het scenario daadwerkelijk voorkomt of beperkt. Onafhankelijk betekent dat dezelfde oorzaak niet tegelijk de barrière laat falen. Verifieerbaar betekent dat werking, conditie en testbaarheid aantoonbaar zijn. Zonder deze drie eigenschappen ontstaat schijnveiligheid.", "level": "Moeilijk", "type": "Open vraag"},
+    {"m": "3", "topic": "Productieomgevingen en petrochemie", "q": "Productieomgevingen en petrochemie 10. Wat is het belangrijkste verschil tussen een effectafstand en een risicoafstand in externe veiligheid?", "mc": ["A. Een effectafstand geldt alleen binnen het terrein, een risicoafstand alleen buiten het terrein", "B. Een effectafstand beschrijft de mogelijke gevolgen van een scenario; een risicoafstand neemt ook de kans of frequentie van dat scenario mee", "C. Een risicoafstand wordt alleen gebruikt door de brandweer", "D. Een effectafstand is altijd kleiner dan een risicoafstand"], "a": "B. Effect gaat over de mogelijke gevolgen van een scenario. Risico combineert effect met kans of frequentie. Daarom kunnen effectafstanden verder reiken dan risicocontouren.", "level": "Moeilijk", "type": "Meerkeuze"}
 ];
 
+const sourceByTopic = {
+    "ATEX": "Bronnen voor verdieping: ATEX 153 in het Arbobesluit, ATEX 114 via het Warenwetbesluit explosieveilig materieel 2016, AI-34 en het explosieveiligheidsdocument.",
+    "Elektrische veiligheid": "Bronnen voor verdieping: Arbowet artikel 8 en 11, Arbobesluit artikel 3.4 en 3.5, NEN 3140 en AI-54 Elektrische veiligheid.",
+    "Machineveiligheid en arbeidsmiddelen": "Bronnen voor verdieping: Arbobesluit hoofdstuk 7, EN ISO 12100, Warenwetbesluit machines, Machinerichtlijn 2006/42/EG en Machineverordening EU 2023/1230.",
+    "Werken op hoogte": "Bronnen voor verdieping: Arbobesluit artikel 3.16, 7.23, 7.23a tot en met 7.23d, AI-15, AI-16, AI-21 en Richtlijn Steigers.",
+    "Horizontaal en verticaal transport": "Bronnen voor verdieping: Arbobesluit hoofdstuk 7, artikel 7.17c, 7.23d en 7.32, Warenwetregeling machines, TCVT en VVT richtlijn mobiele kraan.",
+    "Besloten ruimten": "Bronnen voor verdieping: Arbobesluit artikel 3.5g, AI-05 Veilig werken in besloten ruimten, werkinstructie VBVBE, NEN 3140 bij nauw geleidende ruimten en TRA/werkvergunning.",
+    "Productieomgevingen en petrochemie": "Bronnen voor verdieping: Seveso-paragraaf in het Bal, Arbobesluit hoofdstuk 2 afdeling ARIE, Arbobesluit hoofdstuk 4, NTA 8620, HAZOP, LOPA, SIL en QRA documentatie."
+};
+rawData.forEach(item => {
+    if(item.m === "3" && item.topic && !item.source) item.source = sourceByTopic[item.topic] || "Bronnen voor verdieping: primair lesmateriaal module 3 en toepasselijke wetgeving.";
+});
+
+let currentModule = null;
+let currentTopic = "all";
 let currentSet = [];
 let quizIdx = 0;
 let streak = 0;
@@ -219,12 +338,44 @@ function goHome() {
     document.getElementById('screen-start').classList.remove('hidden');
 }
 
-function initQuiz(mod) {
-    currentSet = rawData.filter(d => d.m === mod).sort(() => Math.random() - 0.5);
+function getModule3Topics() {
+    return [...new Set(rawData.filter(d => d.m === '3' && d.topic).map(d => d.topic))];
+}
+
+function populateTopicSelect(selectId, selected = 'all') {
+    const select = document.getElementById(selectId);
+    if(!select) return;
+    const topics = getModule3Topics();
+    select.innerHTML = '<option value="all">Alles oefenen</option>' + topics.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+    select.value = selected;
+}
+
+function getSelectedTopic(selectId) {
+    const select = document.getElementById(selectId);
+    return select ? select.value : 'all';
+}
+
+function initQuiz(mod, topic = 'all', randomize = true) {
+    currentModule = mod;
+    currentTopic = topic || 'all';
+    currentSet = rawData.filter(d => d.m === mod && (mod !== '3' || currentTopic === 'all' || d.topic === currentTopic));
+    if(randomize) currentSet = currentSet.sort(() => Math.random() - 0.5);
     quizIdx = 0;
+    streak = 0;
+    updateStreak(false);
     goHome();
     document.getElementById('screen-start').classList.add('hidden');
     document.getElementById('screen-quiz').classList.remove('hidden');
+    const panel = document.getElementById('topic-quiz-panel');
+    if(mod === '3') {
+        panel.classList.remove('hidden');
+        populateTopicSelect('topic-quiz-select', currentTopic);
+        const startRandom = document.getElementById('randomize-start');
+        document.getElementById('randomize-quiz').checked = randomize;
+        if(startRandom) startRandom.checked = randomize;
+    } else {
+        panel.classList.add('hidden');
+    }
     showQuestion();
 }
 
@@ -244,6 +395,8 @@ function showQuestion() {
         document.getElementById('open-options').classList.remove('hidden');
         document.getElementById('open-answer').classList.add('hidden');
         document.getElementById('open-eval').classList.add('hidden');
+        const input = document.getElementById('open-input');
+        if(input) input.value = '';
     }
 }
 
@@ -254,24 +407,24 @@ function renderMC(item) {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
         btn.innerText = opt;
-        btn.onclick = () => checkMC(btn, opt[0], item.a[0]);
+        btn.onclick = () => checkMC(btn, opt[0], item.a[0], item);
         container.appendChild(btn);
     });
 }
 
-function checkMC(btn, picked, correct) {
+function checkMC(btn, picked, correct, item) {
     const btns = document.querySelectorAll('.option-btn');
     btns.forEach(b => b.disabled = true);
     
     if(picked === correct) {
         btn.classList.add('correct');
         updateStreak(true);
-        showMsg("Helemaal correct!", "btn-success");
+        showAnswerFeedback("Correct.", item, "btn-success");
     } else {
         btn.classList.add('wrong');
         btns.forEach(b => { if(b.innerText[0] === correct) b.classList.add('correct'); });
         updateStreak(false);
-        showMsg("Helaas! Het juiste antwoord is gemarkeerd.", "btn-error");
+        showAnswerFeedback("Niet correct. Het juiste antwoord is gemarkeerd.", item, "btn-error");
     }
     document.getElementById('next-btn').classList.remove('hidden');
 }
@@ -279,7 +432,7 @@ function checkMC(btn, picked, correct) {
 function revealOpen() {
     const item = currentSet[quizIdx];
     const div = document.getElementById('open-answer');
-    div.innerText = item.a;
+    div.innerHTML = escapeHtml(item.a) + sourceHtml(item);
     div.classList.remove('hidden');
     document.getElementById('open-eval').classList.remove('hidden');
 }
@@ -288,7 +441,7 @@ function scoreOpen(win) {
     updateStreak(win);
     document.getElementById('open-eval').classList.add('hidden');
     document.getElementById('next-btn').classList.remove('hidden');
-    showMsg(win ? "Goed onthouden!" : "Geen probleem, herhaal de theorie nog eens.", win ? "btn-success" : "btn-error");
+    showMsg(win ? "Kern goed." : "Nog niet voldoende. Vergelijk je antwoord met het voorbeeldantwoord.", win ? "btn-success" : "btn-error");
 }
 
 function updateStreak(win) {
@@ -297,6 +450,22 @@ function updateStreak(win) {
     s.innerText = `Streak: ${streak} 🔥`;
     if(win) s.classList.add('pop');
     setTimeout(() => s.classList.remove('pop'), 400);
+}
+
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[ch]));
+}
+
+function sourceHtml(item) {
+    return item && item.source ? `<div class="source-note">Bronnen voor verdieping: ${escapeHtml(item.source).replace(/^Bronnen voor verdieping:\s*/,'')}</div>` : '';
+}
+
+function showAnswerFeedback(txt, item, cls) {
+    const m = document.getElementById('feedback-msg');
+    m.innerHTML = `<div>${escapeHtml(txt)}</div><div style="margin-top:10px; font-weight:normal; line-height:1.6;">${escapeHtml(item.a)}</div>${sourceHtml(item)}`;
+    m.className = "bold " + cls;
+    m.style.padding = "15px";
+    m.classList.remove('hidden');
 }
 
 function showMsg(txt, cls) {
@@ -321,23 +490,25 @@ function initTable() {
     document.getElementById('screen-start').classList.add('hidden');
     document.getElementById('screen-table').classList.remove('hidden');
     renderTable('all');
+    populateTopicSelect('topic-table-select', 'all');
 }
 
-function renderTable(filter) {
+function renderTable(filter, topic = 'all') {
     const body = document.getElementById('table-body');
     body.innerHTML = '';
-    const filtered = filter === 'all' ? rawData : rawData.filter(d => d.m === filter);
+    const filtered = filter === 'all' ? rawData : rawData.filter(d => d.m === filter && (filter !== '3' || topic === 'all' || d.topic === topic));
     
     filtered.forEach(d => {
         const tr = document.createElement('tr');
-        const typeDisplay = d.mc ? d.mc.join('<br>') : '<span style="color:#27ae60; font-weight:bold;">Open Vraag</span>';
+        const meta = [d.topic, d.type, d.level].filter(Boolean).join(' | ');
+        const typeDisplay = (meta ? '<div style="margin-bottom:8px; color:#1e8449; font-weight:bold;">' + meta + '</div>' : '') + (d.mc ? d.mc.join('<br>') : '<span style="color:#27ae60; font-weight:bold;">Open vraag</span>');
         tr.innerHTML = `
             <td>${d.m}</td>
             <td class="bold">${d.q}</td>
             <td>${typeDisplay}</td>
             <td class="ans-cell">
                 <button class="btn-primary" onclick="toggleAns(this)" style="font-size:0.8rem; padding:8px 12px;">Antwoord tonen</button>
-                <div class="ans-content">${d.a}</div>
+                <div class="ans-content">${escapeHtml(d.a)}${sourceHtml(d)}</div>
             </td>
         `;
         body.appendChild(tr);
@@ -354,6 +525,11 @@ function toggleAns(btn) {
         btn.innerText = "Verbergen";
     }
 }
+document.addEventListener('DOMContentLoaded', () => {
+    populateTopicSelect('topic-start-select', 'all');
+    populateTopicSelect('topic-quiz-select', 'all');
+    populateTopicSelect('topic-table-select', 'all');
+});
 </script>
 </body>
 </html>
